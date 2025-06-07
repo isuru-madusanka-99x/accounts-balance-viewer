@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import { AuthService as Auth0Service } from '@auth0/auth0-angular';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { catchError, distinctUntilChanged, map, startWith } from 'rxjs/operators';
 
 export enum UserRole {
-  ADMIN = 'admin',
-  USER = 'user'
+  ADMIN = 'Admin',
+  USER = 'Viewer'
 }
 
 @Injectable({
@@ -31,20 +31,23 @@ export class AuthService {
         if (!user) return UserRole.USER;
         
         // Auth0 custom claims should be namespaced
-        const roles = user['https://yourapp.com/roles'] || user['app_metadata']?.roles || [];
+        const roles = user['https://schemas.accountsbalanceviewer.com/roles'] || user['app_metadata']?.roles || [];
         
         if (Array.isArray(roles) && roles.includes(UserRole.ADMIN)) {
           return UserRole.ADMIN;
         }
         return UserRole.USER;
-      })
+      }),
+      catchError(() => of(UserRole.USER)) // Add error handling
     );
   }
 
   // Check if user is admin
-  isAdmin$(): Observable<boolean> {
+  get isAdmin$(): Observable<boolean> {
     return this.getUserRole$().pipe(
-      map(role => role === UserRole.ADMIN)
+      map(role => role === UserRole.ADMIN),
+      startWith(false), // Add initial value
+      distinctUntilChanged() // Prevent unnecessary emissions
     );
   }
 

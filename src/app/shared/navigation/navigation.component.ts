@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
@@ -25,24 +25,24 @@ import { AuthService } from '../../auth/auth.service';
           <a routerLink="/upload" 
              routerLinkActive="active" 
              class="nav-link"
-             *ngIf="authService.isAdmin$() | async">
+             *ngIf="isAdmin$ | async">
             <span class="link-icon">📤</span>
             Upload Balances
           </a>
+          
           <a routerLink="/reports" 
              routerLinkActive="active" 
              class="nav-link"
-             *ngIf="authService.isAdmin$() | async">
+             *ngIf="isAdmin$ | async">
             <span class="link-icon">📈</span>
             Reports
           </a>
         </div>
-        
         <div class="nav-user" *ngIf="authService.user$ | async as user">
           <div class="user-info">
             <span class="user-name">{{ user.name || user.email }}</span>
-            <span class="user-role" *ngIf="authService.isAdmin$() | async">Admin</span>
-            <span class="user-role user-role-regular" *ngIf="!(authService.isAdmin$() | async)">User</span>
+            <span class="user-role" *ngIf="isAdmin$ | async">Admin</span>
+            <span class="user-role user-role-regular" *ngIf="!(isAdmin$ | async)">User</span>
           </div>
           <button class="btn btn-logout" (click)="logout()">
             <span class="logout-icon">🚪</span>
@@ -188,8 +188,16 @@ import { AuthService } from '../../auth/auth.service';
     }
   `]
 })
-export class NavigationComponent {
-  constructor(public authService: AuthService) {}
+export class NavigationComponent implements OnInit {
+  isAdmin$;
+
+  constructor(public authService: AuthService) {
+    this.isAdmin$ = this.authService.isAdmin$;
+  }
+
+  ngOnInit() {
+    this.isAdmin$.subscribe();
+  }
 
   logout(): void {
     this.authService.logout();
