@@ -1,59 +1,83 @@
-# AccountsBalanceViewer
+# Accounts Balance Viewer
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.9.
+A modern Angular application for viewing and managing account balances with Auth0 authentication and role-based access control.
 
-## Development server
+## Features
 
-To start a local development server, run:
+- 🔐 **Auth0 Authentication** - Secure login and signup
+- 👥 **Role-Based Access Control** - Admin and User roles
+- 📊 **Balance Viewing** - View current account balances (All users)  
+- 📤 **File Upload** - Upload balance data files (Admin only)
+- 📈 **Reports & Analytics** - View reports and export data (Admin only)
+- 🎨 **Modern UI** - Beautiful, responsive design
+- 🚀 **Built with Angular 19** - Latest Angular features
 
-```bash
-ng serve
-```
+## User Roles
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+### Regular Users
+- View account balances
+- Access to balance overview page
 
-## Code scaffolding
+### Admin Users  
+- All regular user permissions
+- Upload balance data files (CSV, Excel)
+- View reports and analytics
+- Export data in multiple formats
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Prerequisites
 
-```bash
-ng generate component component-name
-```
+- Node.js (v18 or higher)
+- npm or yarn
+- Auth0 account and application setup
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## Auth0 Setup
 
-```bash
-ng generate --help
-```
+1. Create an Auth0 account at [auth0.com](https://auth0.com)
+2. Create a new Single Page Application
+3. Configure the following settings:
+   - **Allowed Callback URLs**: `http://localhost:4200`
+   - **Allowed Logout URLs**: `http://localhost:4200`
+   - **Allowed Web Origins**: `http://localhost:4200`
 
-## Building
+4. Create roles in Auth0 Dashboard:
+   - Go to User Management > Roles
+   - Create "admin" role
+   - Create "user" role (optional, as this is the default)
 
-To build the project run:
+5. Create a rule/action to add roles to tokens:
+   ```javascript
+   exports.onExecutePostLogin = async (event, api) => {
+     const namespace = 'https://yourapp.com/';
+     if (event.authorization) {
+       api.idToken.setCustomClaim(`${namespace}roles`, event.user.app_metadata?.roles || ['user']);
+     }
+   };
+   ```
 
-```bash
-ng build
-```
+6. Update `src/app/auth/auth.config.ts` with your Auth0 credentials
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+## Installation
 
-## Running unit tests
+1. Install dependencies: `npm install`
+2. Update Auth0 configuration in `src/app/auth/auth.config.ts`
+3. Start the development server: `npm start`
+4. Open [http://localhost:4200](http://localhost:4200) in your browser
 
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+## Usage
 
-```bash
-ng test
-```
+### For Regular Users
+1. Sign up or login through Auth0
+2. View account balances on the main page
 
-## Running end-to-end tests
+### For Admin Users
+1. Login with admin role assigned in Auth0
+2. Access upload and reports features
 
-For end-to-end (e2e) testing, run:
+### Assigning Admin Role
 
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+To make a user an admin:
+1. Go to Auth0 Dashboard > User Management > Users
+2. Select the user
+3. Go to the "app_metadata" section
+4. Add: `{"roles": ["admin"]}`
+5. Save changes
