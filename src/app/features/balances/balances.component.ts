@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Balance, BalanceService } from '../../shared/services/balance.service';
 
 @Component({
   selector: 'app-balances',
@@ -13,8 +14,23 @@ import { CommonModule } from '@angular/common';
       </div>
       
       <div class="content-card">
-        <div class="balance-grid">
-          <div class="balance-item" *ngFor="let account of mockAccounts">
+        <!-- Loading state -->
+        <div class="loading-state" *ngIf="isLoading">
+          <span class="loading-icon">⏳</span>
+          <h3>Loading balances...</h3>
+        </div>
+
+        <!-- Error state -->
+        <div class="error-state" *ngIf="errorMessage">
+          <span class="error-icon">❌</span>
+          <h3>Error Loading Balances</h3>
+          <p>{{ errorMessage }}</p>
+          <button class="btn btn-retry" (click)="loadBalances()">Try Again</button>
+        </div>
+
+        <!-- Balances grid -->
+        <div class="balance-grid" *ngIf="!isLoading && !errorMessage && balances.length > 0">
+          <div class="balance-item" *ngFor="let account of balances">
             <div class="account-info">
               <h3>{{ account.name }}</h3>
               <p class="account-number">{{ account.number }}</p>
@@ -30,13 +46,14 @@ import { CommonModule } from '@angular/common';
           </div>
         </div>
         
-        <div class="empty-state" *ngIf="mockAccounts.length === 0">
+        <!-- Empty state -->
+        <div class="empty-state" *ngIf="!isLoading && !errorMessage && balances.length === 0">
           <span class="empty-icon">📊</span>
           <h3>No Account Balances</h3>
           <p>No balance data is currently available. Please contact an administrator to upload balance data.</p>
         </div>
         
-        <div class="info-note">
+        <div class="info-note" *ngIf="!isLoading && !errorMessage">
           <p><strong>Note:</strong> Balance data is updated by administrators. If you notice any discrepancies, please contact support.</p>
         </div>
       </div>
@@ -70,6 +87,38 @@ import { CommonModule } from '@angular/common';
       border-radius: 16px;
       padding: 2rem;
       box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+
+    .loading-state, .error-state {
+      text-align: center;
+      padding: 3rem;
+      color: #666;
+    }
+
+    .loading-icon, .error-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    .error-state h3 {
+      color: #dc3545;
+    }
+
+    .btn-retry {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+      margin-top: 1rem;
+      transition: background-color 0.3s ease;
+    }
+
+    .btn-retry:hover {
+      background: #5a6fd8;
     }
     
     .balance-grid {
@@ -159,12 +208,31 @@ import { CommonModule } from '@angular/common';
     }
   `]
 })
-export class BalancesComponent {
-  // Mock data - replace with real API call
-  mockAccounts = [
-    { name: 'Checking Account', number: '****-1234', balance: 2543.75 },
-    { name: 'Savings Account', number: '****-5678', balance: 15230.50 },
-    { name: 'Credit Card', number: '****-9012', balance: -485.20 },
-    { name: 'Investment Account', number: '****-3456', balance: 8967.33 }
-  ];
+export class BalancesComponent implements OnInit {
+  balances: Balance[] = [];
+  isLoading = false;
+  errorMessage = '';
+
+  constructor(private balanceService: BalanceService) {}
+
+  ngOnInit(): void {
+    this.loadBalances();
+  }
+
+  loadBalances(): void {
+    this.isLoading = true;
+    this.errorMessage = '';
+    
+    this.balanceService.getBalances().subscribe({
+      next: (balances) => {
+        this.balances = balances;
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error loading balances:', error);
+        this.errorMessage = 'Failed to load account balances. Please try again.';
+        this.isLoading = false;
+      }
+    });
+  }
 }

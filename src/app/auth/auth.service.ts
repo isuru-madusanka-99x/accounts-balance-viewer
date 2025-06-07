@@ -78,4 +78,8 @@ export class AuthService {
       }
     });
   }
+
+  getAccessToken(): Observable<string> {
+    return this.auth0.getAccessTokenSilently();
+  }
 }
