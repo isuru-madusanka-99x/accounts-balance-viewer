@@ -1,5 +1,15 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { UploadService } from '../../shared/services/upload.service';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+
+interface UploadResult {
+  fileName: string;
+  success: boolean;
+  message: string;
+  date: Date;
+}
 
 @Component({
   selector: 'app-upload',
@@ -13,7 +23,36 @@ import { CommonModule } from '@angular/common';
       </div>
       
       <div class="content-card">
-        <div class="upload-section">
+        <!-- Upload Progress -->
+        <div class="upload-progress" *ngIf="isUploading">
+          <div class="progress-header">
+            <h3>Uploading Files...</h3>
+            <span class="progress-text">{{ currentUploadIndex + 1 }} of {{ totalFiles }}</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" [style.width.%]="uploadProgress"></div>
+          </div>
+          <p class="current-file">Uploading: {{ currentFileName }}</p>
+        </div>
+
+        <!-- Upload Results -->
+        <div class="upload-results" *ngIf="uploadResults.length > 0 && !isUploading">
+          <h3>Upload Results</h3>
+          <div class="results-list">
+            <div class="result-item" *ngFor="let result of uploadResults" 
+                 [class.success]="result.success" 
+                 [class.error]="!result.success">
+              <div class="result-info">
+                <span class="result-file">📄 {{ result.fileName }}</span>
+                <span class="result-message">{{ result.message }}</span>
+              </div>
+              <span class="result-icon">{{ result.success ? '✅' : '❌' }}</span>
+            </div>
+          </div>
+          <button class="btn btn-primary" (click)="clearResults()">Upload More Files</button>
+        </div>
+
+        <div class="upload-section" *ngIf="!isUploading && uploadResults.length === 0">
           <div class="upload-area" 
                (dragover)="onDragOver($event)" 
                (dragleave)="onDragLeave($event)"
@@ -44,24 +83,27 @@ import { CommonModule } from '@angular/common';
               </div>
             </div>
             <button class="btn btn-success" (click)="uploadFiles()" [disabled]="isUploading">
-              {{ isUploading ? 'Uploading...' : 'Upload Files' }}
+              Upload Files ({{ selectedFiles.length }})
             </button>
           </div>
         </div>
         
-        <div class="upload-history">
+        <div class="upload-history" *ngIf="!isUploading">
           <h3>Recent Uploads</h3>
-          <div class="history-list">
+          <div class="history-list" *ngIf="uploadHistory.length > 0; else noHistory">
             <div class="history-item" *ngFor="let upload of uploadHistory">
               <div class="upload-info">
                 <span class="upload-file">{{ upload.fileName }}</span>
                 <span class="upload-date">{{ upload.date | date:'medium' }}</span>
               </div>
-              <span class="upload-status" [class]="upload.status">
-                {{ upload.status === 'success' ? '✅' : '❌' }}
+              <span class="upload-status" [class]="upload.success">
+                {{ upload.success ? '✅' : '❌' }}
               </span>
             </div>
           </div>
+          <ng-template #noHistory>
+            <p class="no-history">No recent uploads</p>
+          </ng-template>
         </div>
         
         <div class="instructions">
@@ -70,6 +112,7 @@ import { CommonModule } from '@angular/common';
             <li>Ensure your file contains columns: Account Name, Account Number, Balance</li>
             <li>Use CSV format for best compatibility</li>
             <li>File size limit: 10MB per file</li>
+            <li>Files are processed one at a time</li>
             <li>Duplicate uploads will overwrite existing data</li>
             <li>All uploads are logged for audit purposes</li>
           </ul>
@@ -105,6 +148,91 @@ import { CommonModule } from '@angular/common';
       border-radius: 16px;
       padding: 2rem;
       box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+
+    .upload-progress {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 20px;
+      background-color: #e9ecef;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 1rem;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      transition: width 0.3s ease;
+    }
+
+    .current-file {
+      color: #666;
+      font-style: italic;
+    }
+
+    .upload-results {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .results-list {
+      margin: 1rem 0;
+    }
+
+    .result-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      margin-bottom: 0.5rem;
+      border-radius: 8px;
+      border-left: 4px solid;
+    }
+
+    .result-item.success {
+      background: #d4edda;
+      border-left-color: #28a745;
+    }
+
+    .result-item.error {
+      background: #f8d7da;
+      border-left-color: #dc3545;
+    }
+
+    .result-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .result-file {
+      font-weight: 500;
+    }
+
+    .result-message {
+      font-size: 0.9rem;
+      color: #666;
+    }
+
+    .result-icon {
+      font-size: 1.2rem;
     }
     
     .upload-area {
@@ -220,6 +348,13 @@ import { CommonModule } from '@angular/common';
       padding: 1rem;
       border-bottom: 1px solid #eee;
     }
+
+    .no-history {
+      color: #666;
+      font-style: italic;
+      text-align: center;
+      padding: 2rem;
+    }
     
     .upload-info {
       display: flex;
@@ -267,13 +402,16 @@ export class UploadComponent {
   selectedFiles: File[] = [];
   isDragOver = false;
   isUploading = false;
+  uploadResults: UploadResult[] = [];
+  uploadHistory: UploadResult[] = [];
   
-  // Mock upload history
-  uploadHistory = [
-    { fileName: 'accounts_march.csv', date: new Date(2024, 2, 15), status: 'success' },
-    { fileName: 'balances_february.xlsx', date: new Date(2024, 1, 28), status: 'success' },
-    { fileName: 'data_january.csv', date: new Date(2024, 0, 31), status: 'error' }
-  ];
+  // Upload progress tracking
+  currentUploadIndex = 0;
+  totalFiles = 0;
+  currentFileName = '';
+  uploadProgress = 0;
+
+  constructor(private uploadService: UploadService) {}
 
   onDragOver(event: DragEvent): void {
     event.preventDefault();
@@ -296,16 +434,26 @@ export class UploadComponent {
   onFileSelect(event: any): void {
     const files = Array.from(event.target.files || []) as File[];
     this.addFiles(files);
+    // Clear the input
+    event.target.value = '';
   }
 
   addFiles(files: File[]): void {
-    const validFiles = files.filter(file => 
-      file.type === 'text/csv' || 
-      file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
-      file.type === 'application/vnd.ms-excel'
+    const validFiles = files.filter(file => {
+      const validTypes = [
+        'text/csv',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-excel'
+      ];
+      return validTypes.includes(file.type) || file.name.endsWith('.csv');
+    });
+    
+    // Filter out duplicates
+    const newFiles = validFiles.filter(file => 
+      !this.selectedFiles.some(existing => existing.name === file.name)
     );
     
-    this.selectedFiles = [...this.selectedFiles, ...validFiles];
+    this.selectedFiles = [...this.selectedFiles, ...newFiles];
   }
 
   removeFile(index: number): void {
@@ -320,27 +468,62 @@ export class UploadComponent {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 
-  uploadFiles(): void {
+  async uploadFiles(): Promise<void> {
     if (this.selectedFiles.length === 0) return;
     
     this.isUploading = true;
+    this.uploadResults = [];
+    this.totalFiles = this.selectedFiles.length;
+    this.currentUploadIndex = 0;
+    this.uploadProgress = 0;
     
-    // Simulate upload process
-    setTimeout(() => {
-      // Add to history
-      this.selectedFiles.forEach(file => {
-        this.uploadHistory.unshift({
+    // Upload files one by one
+    for (let i = 0; i < this.selectedFiles.length; i++) {
+      const file = this.selectedFiles[i];
+      this.currentFileName = file.name;
+      this.currentUploadIndex = i;
+      this.uploadProgress = (i / this.totalFiles) * 100;
+      
+      try {
+        const response = await this.uploadService.uploadBalanceFile(file).toPromise();
+        
+        const result: UploadResult = {
           fileName: file.name,
-          date: new Date(),
-          status: 'success'
-        });
-      });
-      
-      // Clear selected files
-      this.selectedFiles = [];
+          success: response?.success || false,
+          message: response?.message || 'Upload completed successfully',
+          date: new Date()
+        };
+        
+        this.uploadResults.push(result);
+        this.uploadHistory.unshift(result);
+        
+      } catch (error: any) {
+        const result: UploadResult = {
+          fileName: file.name,
+          success: false,
+          message: error?.error?.message || error?.message || 'Upload failed',
+          date: new Date()
+        };
+        
+        this.uploadResults.push(result);
+        this.uploadHistory.unshift(result);
+      }
+    }
+    
+    // Complete progress
+    this.uploadProgress = 100;
+    
+    // Clean up
+    setTimeout(() => {
       this.isUploading = false;
-      
-      alert('Files uploaded successfully!');
-    }, 2000);
+      this.selectedFiles = [];
+      this.currentFileName = '';
+      this.currentUploadIndex = 0;
+      this.uploadProgress = 0;
+    }, 1000);
+  }
+
+  clearResults(): void {
+    this.uploadResults = [];
   }
 }
