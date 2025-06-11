@@ -22,16 +22,9 @@ export const routes: Routes = [
     loadComponent: () => import('./features/balances/balances.component').then(m => m.BalancesComponent),
     canActivate: [AuthGuard, RoleGuard],
     data: { role: UserRole.USER }
-  },
-  {
+  },  {
     path: 'upload',
     loadComponent: () => import('./features/upload/upload.component').then(m => m.UploadComponent),
-    canActivate: [AuthGuard, RoleGuard],
-    data: { role: UserRole.ADMIN }
-  },
-  {
-    path: 'reports',
-    loadComponent: () => import('./features/reports/reports.component').then(m => m.ReportsComponent),
     canActivate: [AuthGuard, RoleGuard],
     data: { role: UserRole.ADMIN }
   },

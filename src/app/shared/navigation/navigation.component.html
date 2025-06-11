@@ -1,0 +1,30 @@
+<nav class="navbar" *ngIf="authService.isAuthenticated$ | async">
+    <div class="nav-container">
+        <a routerLink="/balances" class="nav-brand">
+            <span class="brand-icon">💰</span>
+            Accounts Balance Viewer
+        </a>
+
+        <div class="nav-links">
+            <a routerLink="/balances" routerLinkActive="active" class="nav-link">
+                <span class="link-icon">📊</span>
+                View Balances
+            </a>
+            <a routerLink="/upload" routerLinkActive="active" class="nav-link" *ngIf="isAdmin$ | async">
+                <span class="link-icon">📤</span>
+                Upload Balances
+            </a>
+        </div>
+        <div class="nav-user" *ngIf="authService.user$ | async as user">
+            <div class="user-info">
+                <span class="user-name">{{ user.name || user.email }}</span>
+                <span class="user-role" *ngIf="isAdmin$ | async">Admin</span>
+                <span class="user-role user-role-regular" *ngIf="!(isAdmin$ | async)">User</span>
+            </div>
+            <button class="btn btn-logout" (click)="logout()">
+                <span class="logout-icon">🚪</span>
+                Logout
+            </button>
+        </div>
+    </div>
+</nav>

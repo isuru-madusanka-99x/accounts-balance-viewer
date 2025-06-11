@@ -1,0 +1,95 @@
+<div class="upload-container">
+    <div class="header">
+        <h2>Upload Balance Data</h2>
+        <p class="subtitle">Upload balance data files (Admin only)</p>
+    </div>
+
+    <div class="content-card">
+        <!-- Upload Progress -->
+        <div class="upload-progress" *ngIf="isUploading">
+            <div class="progress-header">
+                <h3>Uploading Files...</h3>
+                <span class="progress-text">{{ currentUploadIndex + 1 }} of {{ totalFiles }}</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" [style.width.%]="uploadProgress"></div>
+            </div>
+            <p class="current-file">Uploading: {{ currentFileName }}</p>
+        </div>
+
+        <!-- Upload Results -->
+        <div class="upload-results" *ngIf="uploadResults.length > 0 && !isUploading">
+            <h3>Upload Results</h3>
+            <div class="results-list">
+                <div class="result-item" *ngFor="let result of uploadResults" [class.success]="result.success"
+                    [class.error]="!result.success">
+                    <div class="result-info">
+                        <span class="result-file">📄 {{ result.fileName }}</span>
+                        <span class="result-message">{{ result.message }}</span>
+                    </div>
+                    <span class="result-icon">{{ result.success ? '✅' : '❌' }}</span>
+                </div>
+            </div>
+            <button class="btn btn-primary" (click)="clearResults()">Upload More Files</button>
+        </div>
+
+        <div class="upload-section" *ngIf="!isUploading && uploadResults.length === 0">
+            <div class="upload-area" (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)"
+                (drop)="onDrop($event)" [class.drag-over]="isDragOver">
+                <div class="upload-icon">📁</div>
+                <h3>Drag & Drop Files Here</h3>
+                <p>or</p>
+                <input type="file" #fileInput (change)="onFileSelect($event)" accept=".csv,.xlsx,.xls" multiple
+                    style="display: none;">
+                <button class="btn btn-primary" (click)="fileInput.click()">
+                    Choose Files
+                </button>
+                <p class="file-info">Supported formats: CSV, Excel (.xlsx, .xls)</p>
+            </div>
+
+            <div class="selected-files" *ngIf="selectedFiles.length > 0">
+                <h4>Selected Files:</h4>
+                <div class="file-list">
+                    <div class="file-item" *ngFor="let file of selectedFiles; let i = index">
+                        <span class="file-name">📄 {{ file.name }}</span>
+                        <span class="file-size">{{ formatFileSize(file.size) }}</span>
+                        <button class="btn-remove" (click)="removeFile(i)">❌</button>
+                    </div>
+                </div>
+                <button class="btn btn-success" (click)="uploadFiles()" [disabled]="isUploading">
+                    Upload Files ({{ selectedFiles.length }})
+                </button>
+            </div>
+        </div>
+
+        <div class="upload-history" *ngIf="!isUploading">
+            <h3>Recent Uploads</h3>
+            <div class="history-list" *ngIf="uploadHistory.length > 0; else noHistory">
+                <div class="history-item" *ngFor="let upload of uploadHistory">
+                    <div class="upload-info">
+                        <span class="upload-file">{{ upload.fileName }}</span>
+                        <span class="upload-date">{{ upload.date | date:'medium' }}</span>
+                    </div>
+                    <span class="upload-status" [class]="upload.success">
+                        {{ upload.success ? '✅' : '❌' }}
+                    </span>
+                </div>
+            </div>
+            <ng-template #noHistory>
+                <p class="no-history">No recent uploads</p>
+            </ng-template>
+        </div>
+
+        <div class="instructions">
+            <h3>Upload Instructions</h3>
+            <ul>
+                <li>Ensure your file contains columns: Account Name, Account Number, Balance</li>
+                <li>Use CSV format for best compatibility</li>
+                <li>File size limit: 10MB per file</li>
+                <li>Files are processed one at a time</li>
+                <li>Duplicate uploads will overwrite existing data</li>
+                <li>All uploads are logged for audit purposes</li>
+            </ul>
+        </div>
+    </div>
+</div>

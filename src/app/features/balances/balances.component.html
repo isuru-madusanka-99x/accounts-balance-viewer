@@ -1,0 +1,57 @@
+<div class="balances-container">
+    <div class="header">
+        <h2>Account Balances</h2>
+        <p class="subtitle">View current balances for each account by period</p>
+    </div>
+
+    <div class="content-card">
+        <!-- Loading state -->
+        <div class="loading-state" *ngIf="isLoading">
+            <span class="loading-icon">⏳</span>
+            <h3>Loading balances...</h3>
+        </div>
+
+        <!-- Error state -->
+        <div class="error-state" *ngIf="errorMessage">
+            <span class="error-icon">❌</span>
+            <h3>Error Loading Balances</h3>
+            <p>{{ errorMessage }}</p>
+            <button class="btn btn-retry" (click)="loadBalances()">Try Again</button>
+        </div>
+
+        <!-- Balance periods -->
+        <div class="balance-periods" *ngIf="!isLoading && !errorMessage && balancePeriods.length > 0">
+            <div class="period-section" *ngFor="let period of balancePeriods">
+                <h3 class="period-title">
+                    Balances as of {{ period.monthName }} {{ period.year }}
+                </h3>
+
+                <div class="balance-table">
+                    <div class="balance-row header-row">
+                        <div class="balance-cell header-cell" *ngFor="let balance of period.balances">
+                            {{ balance.accountName }}
+                        </div>
+                    </div>
+                    <div class="balance-row data-row">
+                        <div class="balance-cell data-cell" *ngFor="let balance of period.balances"
+                            [class.negative]="balance.amount < 0">
+                            {{ balance.formattedAmount }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty state -->
+        <div class="empty-state" *ngIf="!isLoading && !errorMessage && balancePeriods.length === 0">
+            <span class="empty-icon">📊</span>
+            <h3>No Balance Data</h3>
+            <p>No balance data is currently available. Please contact an administrator to upload balance data.</p>
+        </div>
+
+        <div class="info-note" *ngIf="!isLoading && !errorMessage && balancePeriods.length > 0">
+            <p><strong>Note:</strong> Balance data is updated by administrators. If you notice any discrepancies, please
+                contact support.</p>
+        </div>
+    </div>
+</div>
