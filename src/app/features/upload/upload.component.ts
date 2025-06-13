@@ -59,6 +59,7 @@ export class UploadComponent {
   addFiles(files: File[]): void {
     const validFiles = files.filter(file => {
       const validTypes = [
+        'text/plain',
         'text/csv',
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         'application/vnd.ms-excel'

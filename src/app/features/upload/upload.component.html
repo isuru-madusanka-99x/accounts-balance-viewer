@@ -1,7 +1,6 @@
 <div class="upload-container">
     <div class="header">
         <h2>Upload Balance Data</h2>
-        <p class="subtitle">Upload balance data files (Admin only)</p>
     </div>
 
     <div class="content-card">
@@ -39,12 +38,12 @@
                 <div class="upload-icon">📁</div>
                 <h3>Drag & Drop Files Here</h3>
                 <p>or</p>
-                <input type="file" #fileInput (change)="onFileSelect($event)" accept=".csv,.xlsx,.xls" multiple
+                <input type="file" #fileInput (change)="onFileSelect($event)" accept=".csv,.xlsx,.xls,.txt" multiple
                     style="display: none;">
                 <button class="btn btn-primary" (click)="fileInput.click()">
                     Choose Files
                 </button>
-                <p class="file-info">Supported formats: CSV, Excel (.xlsx, .xls)</p>
+                <p class="file-info">Supported formats: CSV, Excel (.xlsx, .xls), Plain Text (.txt)</p>
             </div>
 
             <div class="selected-files" *ngIf="selectedFiles.length > 0">
@@ -83,12 +82,10 @@
         <div class="instructions">
             <h3>Upload Instructions</h3>
             <ul>
-                <li>Ensure your file contains columns: Account Name, Account Number, Balance</li>
-                <li>Use CSV format for best compatibility</li>
+                <li>Ensure your file is properly formatted(Excel, txt)</li>
                 <li>File size limit: 10MB per file</li>
                 <li>Files are processed one at a time</li>
                 <li>Duplicate uploads will overwrite existing data</li>
-                <li>All uploads are logged for audit purposes</li>
             </ul>
         </div>
     </div>
